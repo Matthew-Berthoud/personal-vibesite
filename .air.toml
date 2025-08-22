@@ -3,7 +3,9 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "go build -o ./tmp/main ."
+# The command now points to your new main.go file
+cmd = "go build -o ./tmp/main ./cmd/web"
 bin = "tmp/main"
+# Include the new ui directory for live reloading
 include_ext = ["go", "tpl", "html", "css", "js", "md", "txt"]
 exclude_dir = ["tmp"]

@@ -27,9 +27,8 @@ type PageData struct {
 
 func main() {
 	// Create a new file server to serve the static files from the current directory.
-	fs := http.FileServer(http.Dir("."))
-	http.Handle("/style.css", fs)
-	http.Handle("/script.js", fs)
+	fs := http.FileServer(http.Dir("ui/static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	// Register a handler for the root URL that fetches and serves the project data.
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +50,7 @@ func main() {
 		}
 
 		// Parse the index.html and project-template.html files.
-		tmpl, err := template.ParseFiles("index.html", "project-template.html")
+		tmpl, err := template.ParseFiles("ui/html/pages/index.html", "ui/html/partials/project-template.html")
 		if err != nil {
 			http.Error(w, "Failed to parse template files.", http.StatusInternalServerError)
 			log.Printf("Error parsing templates: %v", err)

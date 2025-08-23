@@ -5,13 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Matthew Berthoud</title>
-  <!-- Link to external CSS file -->
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
 <body>
-
-  <!-- Header -->
   <header>
     <nav class="container">
       <div class="logo">Matthew Berthoud</div>
@@ -26,21 +23,10 @@
 
   <main class="container">
 
-    <!-- Hero Section -->
-    <section id="hero">
-      <h1>Welcome to My Portfolio</h1>
-      <p>A passionate developer creating modern web experiences.</p>
-    </section>
 
     <!-- About Section -->
     <section id="about">
-      <h2>About Me</h2>
-      <p>
-        Hello! I'm a software developer with a passion for building beautiful and functional websites and applications.
-        I have experience in various technologies and I'm always eager to learn new things. This website is a small
-        demonstration,
-        built with pure HTML, CSS, and JavaScript, with no external libraries or frameworks.
-      </p>
+      {{template "about-me" .}}
     </section>
 
     <!-- Projects Section -->

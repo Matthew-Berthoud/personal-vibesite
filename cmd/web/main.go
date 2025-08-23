@@ -1,8 +1,7 @@
 package main
 
 import (
-	"bufio"
-	"context"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -10,23 +9,30 @@ import (
 	"strings"
 
 	"github.com/gomarkdown/markdown"
-	"github.com/google/go-github/v74/github"
 )
 
-// Project represents the data for a single project card.
-type Project struct {
-	Name      string
-	Overview  template.HTML
-	GitHubURL string
-}
+const GITHUB_USERNAME = "Matthew-Berthoud"
+const PROJECT_NAMES = "projects.txt"
 
 // PageData holds the data to be rendered in the HTML template.
 type PageData struct {
 	Projects []Project
+	AboutMe  template.HTML
+}
+
+func ReadLines(path string) ([]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+	return lines, nil
 }
 
 func main() {
 	// Create a new file server to serve the static files from the current directory.
+	gh := NewGithubConnection(GITHUB_USERNAME)
 	fs := http.FileServer(http.Dir("ui/static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
@@ -37,27 +43,39 @@ func main() {
 			return
 		}
 
-		projects, err := getProjectsFromGitHub()
+		repos, err := ReadLines(PROJECT_NAMES)
+		if err != nil {
+			log.Fatalf("failed to read repos: %v", err)
+		}
+
+		projects, err := gh.GetProjects(repos)
 		if err != nil {
 			http.Error(w, "Failed to get project data from GitHub.", http.StatusInternalServerError)
 			log.Printf("Error getting projects: %v", err)
 			return
 		}
 
-		// Prepare the data for the template.
+		aboutMeMD, err := gh.GetReadMe(GITHUB_USERNAME)
+		if err != nil {
+			http.Error(w, "Failed to get About Me data from GitHub.", http.StatusInternalServerError)
+			log.Printf("Error getting About Me: %v", err)
+			return
+		}
+		htmlBytes := markdown.ToHTML([]byte(aboutMeMD), nil, nil)
+		aboutMe := template.HTML(htmlBytes)
+
 		data := PageData{
 			Projects: projects,
+			AboutMe:  aboutMe,
 		}
 
-		// Parse the index.html and project-template.html files.
-		tmpl, err := template.ParseFiles("ui/html/pages/index.html", "ui/html/partials/project-template.html")
+		tmpl, err := template.ParseFiles("ui/html/pages/index.html", "ui/html/partials/project-template.html", "ui/html/partials/about-me.html")
 		if err != nil {
 			http.Error(w, "Failed to parse template files.", http.StatusInternalServerError)
 			log.Printf("Error parsing templates: %v", err)
 			return
 		}
 
-		// Execute the template with the project data.
 		err = tmpl.ExecuteTemplate(w, "index.html", data)
 		if err != nil {
 			http.Error(w, "Failed to render template.", http.StatusInternalServerError)
@@ -67,81 +85,4 @@ func main() {
 
 	log.Println("Server listening on http://localhost:8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-func getProjectsFromGitHub() ([]Project, error) {
-	var projects []Project
-
-	// Read the list of repositories from projects.txt.
-	file, err := os.Open("projects.txt")
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	// Create a new GitHub client without authentication.
-	// This will work for public repos but is subject to rate limits.
-	ctx := context.Background()
-	client := github.NewClient(nil)
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		repoName := strings.TrimSpace(scanner.Text())
-		if repoName == "" {
-			continue
-		}
-
-		// Get the README content from the specified repository.
-		readme, _, err := client.Repositories.GetReadme(ctx, "Matthew-Berthoud", repoName, nil)
-		if err != nil {
-			log.Printf("Error fetching README for %s: %v", repoName, err)
-			continue
-		}
-
-		// Decode the base64 content.
-		content, err := readme.GetContent()
-		if err != nil {
-			log.Printf("Error decoding content for %s: %v", repoName, err)
-			continue
-		}
-
-		// Extract the "Overview" section.
-		overviewMarkdown := extractOverview(content)
-
-		// Convert Markdown to HTML.
-		htmlBytes := markdown.ToHTML([]byte(overviewMarkdown), nil, nil)
-		overviewHTML := template.HTML(htmlBytes)
-
-		projects = append(projects, Project{
-			Name:      repoName,
-			Overview:  overviewHTML,
-			GitHubURL: "https://github.com/Matthew-Berthoud/" + repoName,
-		})
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	return projects, nil
-}
-
-func extractOverview(md string) string {
-	// Simple string manipulation to find the content between "## Overview" and the next heading.
-	overviewStart := "## Overview"
-	startIdx := strings.Index(md, overviewStart)
-	if startIdx == -1 {
-		return "No overview section found."
-	}
-	startIdx += len(overviewStart)
-	md = md[startIdx:]
-
-	// Find the end of the overview section (next heading, or end of file).
-	endIdx := strings.Index(md, "\n#")
-	if endIdx == -1 {
-		// If no next heading is found, take the rest of the content.
-		return strings.TrimSpace(md)
-	}
-
-	return strings.TrimSpace(md[:endIdx])
 }

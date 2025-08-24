@@ -15,7 +15,7 @@
       <ul>
         <li><a href="#about">About</a></li>
         <li><a href="#projects">Projects</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a href="https://www.linkedin.com/in/matthew-berthoud/">Contact</a></li>
       </ul>
       <button id="theme-toggle">Toggle Theme</button>
     </nav>
@@ -26,6 +26,7 @@
 
     <!-- About Section -->
     <section id="about">
+      <h2>About Me</h2>
       {{template "about-me" .}}
     </section>
 
@@ -37,17 +38,6 @@
         {{template "project-card" .}}
         {{end}}
       </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact">
-      <h2>Get in Touch</h2>
-      <form id="contact-form">
-        <input type="text" name="name" placeholder="Your Name" required>
-        <input type="email" name="email" placeholder="Your Email" required>
-        <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
-        <button type="submit">Send Message</button>
-      </form>
     </section>
 
   </main>

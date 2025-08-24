@@ -66,6 +66,18 @@ func (g *GithubConnection) GetProjects(repos []string) ([]Project, error) {
 	return projects, nil
 }
 
+func (g *GithubConnection) GetAboutMe() (template.HTML, error) {
+	aboutMeMD, err := g.GetReadMe(g.User)
+	if err != nil {
+		return "", err
+	}
+
+	bodyMarkdown := extractSection(aboutMeMD, "Hi there 👋")
+	htmlBytes := markdown.ToHTML([]byte(bodyMarkdown), nil, nil)
+
+	return template.HTML(htmlBytes), nil
+}
+
 func (g *GithubConnection) GetReadMe(repo string) (string, error) {
 	readmeEncoded, _, err := g.Client.Repositories.GetReadme(g.Context, g.User, repo, nil)
 	if err != nil {
@@ -78,6 +90,25 @@ func (g *GithubConnection) GetReadMe(repo string) (string, error) {
 	}
 
 	return readme, err
+}
+
+func extractSection(md string, sectionTitle string) string {
+	titleStart := "# " + sectionTitle
+	startIdx := strings.Index(md, titleStart)
+	if startIdx == -1 {
+		return "No " + sectionTitle + " section found."
+	}
+	startIdx += len(titleStart)
+	md = md[startIdx:]
+
+	// Find the end of the section (next heading, or end of file).
+	endIdx := strings.Index(md, "\n#")
+	if endIdx == -1 {
+		// If no next heading is found, take the rest of the content.
+		return strings.TrimSpace(md)
+	}
+
+	return strings.TrimSpace(md[:endIdx])
 }
 
 func extractOverview(md string) string {

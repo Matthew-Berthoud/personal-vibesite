@@ -57,7 +57,7 @@ func main() {
 			return
 		}
 
-		aboutMeMD, err := gh.GetReadMe(GITHUB_USERNAME)
+		aboutMeMD, err := gh.GetAboutMe()
 		if err != nil {
 			http.Error(w, "Failed to get About Me data from GitHub.", http.StatusInternalServerError)
 			log.Printf("Error getting About Me: %v", err)

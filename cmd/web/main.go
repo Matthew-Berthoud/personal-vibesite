@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/gomarkdown/markdown"
+
+	"personal-vibesite/internal/github"
 )
 
 const GITHUB_USERNAME = "Matthew-Berthoud"
@@ -16,7 +18,7 @@ const PROJECT_NAMES = "projects.txt"
 
 // PageData holds the data to be rendered in the HTML template.
 type PageData struct {
-	Projects []Project
+	Projects []github.Project
 	AboutMe  template.HTML
 }
 
@@ -32,7 +34,7 @@ func ReadLines(path string) ([]string, error) {
 
 func main() {
 	// Create a new file server to serve the static files from the current directory.
-	gh := NewGithubConnection(GITHUB_USERNAME)
+	gh := github.NewGithubConnection(GITHUB_USERNAME)
 	fs := http.FileServer(http.Dir("ui/static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 

@@ -47,6 +47,9 @@ func NewGithubConnection(user string) *GithubConnection {
 func (g *GithubConnection) GetProjects(repos []string) ([]Project, error) {
 	var projects []Project
 	for _, repo := range repos {
+		if repo == "" {
+			continue
+		}
 		readme, err := g.GetReadMe(repo)
 		if err != nil {
 			log.Printf("Failed to get ReadMe for %s", repo)

@@ -4,12 +4,15 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/joho/godotenv"
 )
 
-const GITHUB_USERNAME = "Matthew-Berthoud"
-const PROJECT_NAMES = "projects.txt"
-
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	data := GatherData()
 
 	fs := http.FileServer(http.Dir("ui/static"))

@@ -10,6 +10,9 @@ import (
 	"personal-vibesite/internal/github"
 )
 
+const GITHUB_USERNAME = "Matthew-Berthoud"
+const PROJECT_NAMES = "projects.txt"
+
 type PageData struct {
 	Projects []github.Project
 	AboutMe  template.HTML
